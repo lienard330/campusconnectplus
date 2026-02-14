@@ -1,12 +1,19 @@
-CampusConnectPlus
+**CampusConnectPlus**
+
 This is a native Android application built with Kotlin and Jetpack Compose. It's designed to connect students and administrators within a campus community.
 
 **What I Created**
+
 •Modern UI: The application uses Jetpack Compose for its user interface, following modern Android development practices.
+
 •Local Data Storage: It uses Room persistence library to store data locally on the device, ensuring offline access to information.
+
 •Modular Architecture: The codebase is organized into modules (core, data, feature_admin, feature_student), which promotes separation of concerns and maintainability.
+
 •Distinct User Roles: The app caters to two different user types:
+
 •Students: Can likely view campus-related information.
+
 •Administrators: Have separate features, probably for managing the content students see.
 
 **What I Finished**

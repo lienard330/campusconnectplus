@@ -22,6 +22,13 @@ class RoomUserRepository(
         dao.delete(id.toString())
     }
 
+    override suspend fun getUserByEmail(email: String): User? =
+        dao.getByEmail(email)?.toModel()
+
+    override suspend fun updatePasswordHash(email: String, passwordHash: String) {
+        dao.updatePasswordHash(email, passwordHash)
+    }
+
     override suspend fun setRole(userId: Long, role: UserRole) {
         dao.updateRole(userId.toString(), role.name)
     }

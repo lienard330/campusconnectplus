@@ -16,8 +16,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.campusconnectplus.data.repository.UserRole
 
 enum class AdminRole { SystemAdmin, EventOrganizer, MediaTeam }
+
+/** Tabs shown in the admin bottom bar based on role. Admin sees all; Staff (ORGANIZER) and Media see only their areas. */
+fun tabsForRole(role: UserRole): List<AdminTab> = when (role) {
+    UserRole.ADMIN -> AdminTabs
+    UserRole.ORGANIZER -> listOf(AdminTab.Events, AdminTab.Announcements, AdminTab.Settings)
+    UserRole.MEDIA_TEAM -> listOf(AdminTab.Media, AdminTab.Settings)
+    else -> listOf(AdminTab.Settings)
+}
 
 sealed class AdminTab(
     val route: String,
@@ -44,9 +53,13 @@ val AdminTabs = listOf(
 )
 
 @Composable
-fun AdminBottomBar(currentRoute: String, onNavigate: (String) -> Unit) {
+fun AdminBottomBar(
+    currentRoute: String,
+    onNavigate: (String) -> Unit,
+    tabs: List<AdminTab> = AdminTabs
+) {
     NavigationBar(tonalElevation = 0.dp) {
-        AdminTabs.forEach { tab ->
+        tabs.forEach { tab ->
             val selected = currentRoute == tab.route
             NavigationBarItem(
                 selected = selected,

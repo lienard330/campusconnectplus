@@ -3,6 +3,7 @@ package com.campusconnectplus.ui.student
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Campaign
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material3.NavigationBar
@@ -21,12 +22,14 @@ sealed class StudentTab(
     data object Events : StudentTab("student/events", "Events", Icons.Outlined.CalendarMonth)
     data object Media : StudentTab("student/media", "Media", Icons.Outlined.PhotoLibrary)
     data object Saved : StudentTab("student/saved", "Saved", Icons.Outlined.BookmarkBorder)
+    data object Announcements : StudentTab("student/announcements", "News", Icons.Outlined.Campaign)
 }
 
 val StudentTabs = listOf(
     StudentTab.Home,
     StudentTab.Events,
     StudentTab.Media,
+    StudentTab.Announcements,
     StudentTab.Saved
 )
 

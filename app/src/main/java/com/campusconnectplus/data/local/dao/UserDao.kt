@@ -9,6 +9,12 @@ interface UserDao {
     @Query("SELECT * FROM users ORDER BY updatedAt DESC")
     fun observeAll(): Flow<List<UserEntity>>
 
+    @Query("SELECT * FROM users WHERE email = :email LIMIT 1")
+    suspend fun getByEmail(email: String): UserEntity?
+
+    @Query("UPDATE users SET passwordHash = :hash WHERE email = :email")
+    suspend fun updatePasswordHash(email: String, hash: String)
+
     @Upsert
     suspend fun upsert(entity: UserEntity)
 

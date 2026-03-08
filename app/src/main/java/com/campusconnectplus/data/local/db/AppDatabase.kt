@@ -2,6 +2,8 @@ package com.campusconnectplus.data.local.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.campusconnectplus.data.local.dao.AnnouncementDao
 import com.campusconnectplus.data.local.dao.EventDao
 import com.campusconnectplus.data.local.dao.FavoriteDao
@@ -21,7 +23,7 @@ import com.campusconnectplus.data.local.entity.UserEntity
         UserEntity::class,
         FavoriteEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

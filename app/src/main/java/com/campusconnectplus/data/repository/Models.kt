@@ -57,9 +57,8 @@ data class User(
     val name: String,
     val email: String,
     val role: UserRole,
-
-    // your fake repo / admin users screen is trying to toggle "active"
     val active: Boolean = true,
-
-    val updatedAt: Long = System.currentTimeMillis()
+    val updatedAt: Long = System.currentTimeMillis(),
+    /** Only set when creating/updating credentials; never exposed from repository. */
+    val passwordHash: String? = null
 )

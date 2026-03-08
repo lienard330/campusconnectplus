@@ -45,4 +45,19 @@ class FakeUserRepository : UserRepository {
             users.value = users.value.filterNot { it.id == id }
         }
     }
+
+    override suspend fun getUserByEmail(email: String): User? = mutex.withLock {
+        users.value.find { it.email.equals(email.trim(), ignoreCase = true) }?.copy(passwordHash = null)
+    }
+
+    override suspend fun updatePasswordHash(email: String, passwordHash: String) {
+        mutex.withLock {
+            val list = users.value.toMutableList()
+            val idx = list.indexOfFirst { it.email.equals(email.trim(), ignoreCase = true) }
+            if (idx >= 0) {
+                list[idx] = list[idx].copy(passwordHash = passwordHash)
+                users.value = list
+            }
+        }
+    }
 }

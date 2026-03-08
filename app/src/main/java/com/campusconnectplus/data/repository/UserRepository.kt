@@ -6,8 +6,8 @@ interface UserRepository {
     fun observeUsers(): Flow<List<User>>
     suspend fun upsert(user: User)
     suspend fun delete(id: Long)
-
-    // optional but matches your AdminUsersScreen errors (setRole / toggleActive)
+    suspend fun getUserByEmail(email: String): User?
+    suspend fun updatePasswordHash(email: String, passwordHash: String)
     suspend fun setRole(userId: Long, role: UserRole)
     suspend fun setActive(userId: Long, active: Boolean)
 }

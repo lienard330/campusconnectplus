@@ -20,25 +20,33 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import android.widget.Toast
+import com.campusconnectplus.core.ui.components.StatRingCanvas
+import com.campusconnectplus.feature_student.home.HomeStats
+import kotlinx.coroutines.flow.StateFlow
 import kotlin.math.max
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun StudentHomeScreen(
-    activeEvents: Int = 12,
-    totalPhotos: Int = 245,
-    savedItems: Int = 8,
+    homeStats: StateFlow<HomeStats>,
     onQuickNavigateEvents: () -> Unit,
     onQuickNavigateMedia: () -> Unit,
     onQuickNavigateSaved: () -> Unit,
     onQuickNavigateAnnouncements: () -> Unit,
     onNavigateToAdmin: () -> Unit = {},
 ) {
+    val stats by homeStats.collectAsState(initial = HomeStats())
+    val activeEvents = stats.eventsCount
+    val totalPhotos = stats.mediaCount
+    val savedItems = stats.savedCount
+
     val listState = rememberLazyListState()
 
     // UI improvement: hide default overscroll glow, keep design clean
@@ -128,10 +136,22 @@ private fun HomeHeader(
                     color = Color.White.copy(alpha = 0.9f)
                 )
             }
+            // Canvas-drawn engagement ring (animation/canvas UI idea)
+            val totalContent = maxOf(1, activeEvents + totalPhotos)
+            val engagementProgress = (savedItems.toFloat() / totalContent).coerceIn(0f, 1f)
+            StatRingCanvas(
+                progress = engagementProgress,
+                ringSize = 44.dp,
+                strokeWidth = 4.dp,
+                trackColor = Color.White.copy(alpha = 0.2f),
+                progressColor = Color(0xFF8BE9FF)
+            )
+            Spacer(Modifier.width(4.dp))
             IconButton(onClick = onAdminClick) {
                 Icon(Icons.Outlined.AdminPanelSettings, contentDescription = "Admin panel", tint = Color.White)
             }
-            IconButton(onClick = {}) {
+            val ctx = LocalContext.current
+            IconButton(onClick = { Toast.makeText(ctx, "No new notifications", Toast.LENGTH_SHORT).show() }) {
                 Icon(Icons.Outlined.Notifications, contentDescription = "Notifications", tint = Color.White)
             }
         }
@@ -196,9 +216,15 @@ private fun EventHighlightsCarousel() {
 }
 
 @Composable
-private fun HighlightCard(tag: String, title: String, date: String, venue: String) {
+private fun HighlightCard(
+    tag: String,
+    title: String,
+    date: String,
+    venue: String,
+    modifier: Modifier = Modifier
+) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .width(310.dp)
             .height(150.dp)
             .clip(RoundedCornerShape(18.dp))

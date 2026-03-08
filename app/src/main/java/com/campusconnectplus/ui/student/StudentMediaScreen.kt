@@ -73,7 +73,12 @@ fun StudentMediaScreen(vm: StudentMediaViewModel) {
                         selected = selectedFilter == filter,
                         onClick = { selectedFilter = filter },
                         label = { Text(filter) },
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Color.White, selectedLabelColor = Color(0xFF0D9488))
+                        colors = FilterChipDefaults.filterChipColors(
+                            containerColor = Color.White.copy(alpha = 0.25f),
+                            labelColor = Color.White,
+                            selectedContainerColor = Color.White,
+                            selectedLabelColor = Color(0xFF0D9488)
+                        )
                     )
                 }
             }

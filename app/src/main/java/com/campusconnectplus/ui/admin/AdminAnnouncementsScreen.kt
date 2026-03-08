@@ -18,6 +18,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.campusconnectplus.core.ui.components.FloatingScrollbar
+import com.campusconnectplus.data.repository.Announcement
+import com.campusconnectplus.data.repository.AnnouncementStatus
 import com.campusconnectplus.feature_admin.announcements.AdminAnnouncementsViewModel
 
 private fun priorityLabel(priority: Int): String = if (priority == 1) "important" else "normal"
@@ -38,6 +40,7 @@ fun AdminAnnouncementsScreen(vm: AdminAnnouncementsViewModel) {
     val state = rememberLazyListState()
     val announcements by vm.announcements.collectAsState()
     var showCreate by remember { mutableStateOf(false) }
+    var announcementToEdit by remember { mutableStateOf<com.campusconnectplus.data.repository.Announcement?>(null) }
 
     CompositionLocalProvider(LocalOverscrollConfiguration provides null) {
         Box(Modifier.fillMaxSize()) {
@@ -76,7 +79,7 @@ fun AdminAnnouncementsScreen(vm: AdminAnnouncementsViewModel) {
                                             Text("• ${timeAgo(a.updatedAt)}", color = Color(0xFF64748B), style = MaterialTheme.typography.labelMedium)
                                         }
                                     }
-                                    IconButton(onClick = { /* TODO: edit dialog */ }) { Icon(Icons.Outlined.Edit, null) }
+                                    IconButton(onClick = { announcementToEdit = a }) { Icon(Icons.Outlined.Edit, null) }
                                     IconButton(onClick = { vm.delete(a.id.toString()) }) { Icon(Icons.Outlined.Delete, null, tint = Color(0xFFEF4444)) }
                                 }
                             }
@@ -93,6 +96,16 @@ fun AdminAnnouncementsScreen(vm: AdminAnnouncementsViewModel) {
                     onCreate = { title, content, priority, status ->
                         vm.upsert(com.campusconnectplus.data.repository.Announcement(title = title, content = content, priority = if (priority == "Important") 1 else 0, status = when (status) { "Published" -> com.campusconnectplus.data.repository.AnnouncementStatus.ACTIVE; "Draft" -> com.campusconnectplus.data.repository.AnnouncementStatus.ARCHIVED; else -> com.campusconnectplus.data.repository.AnnouncementStatus.ACTIVE }))
                         showCreate = false
+                    }
+                )
+            }
+            announcementToEdit?.let { ann ->
+                EditAnnouncementDialog(
+                    initial = ann,
+                    onDismiss = { announcementToEdit = null },
+                    onSave = { updated ->
+                        vm.upsert(updated)
+                        announcementToEdit = null
                     }
                 )
             }
@@ -129,6 +142,61 @@ private fun CreateAnnouncementDialog(
                 onClick = { onCreate(title, content, priority, status) },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0B2A6B))
             ) { Text("Create Announcement") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
+}
+
+@Composable
+private fun EditAnnouncementDialog(
+    initial: Announcement,
+    onDismiss: () -> Unit,
+    onSave: (Announcement) -> Unit
+) {
+    var title by remember(initial.id) { mutableStateOf(initial.title) }
+    var content by remember(initial.id) { mutableStateOf(initial.content) }
+    var priority by remember(initial.id) { mutableStateOf(if (initial.priority == 1) "Important" else "Normal") }
+    var status by remember(initial.id) {
+        mutableStateOf(
+            when (initial.status) {
+                AnnouncementStatus.ACTIVE -> "Published"
+                AnnouncementStatus.ARCHIVED -> "Draft"
+            }
+        )
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Announcement") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(title, { title = it }, label = { Text("Title") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(content, { content = it }, label = { Text("Content") }, modifier = Modifier.fillMaxWidth())
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    ExposedDropdown("Priority Level", priority, listOf("Normal", "Important"), { priority = it }, Modifier.weight(1f))
+                    ExposedDropdown("Status", status, listOf("Draft", "Pending", "Published"), { status = it }, Modifier.weight(1f))
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onSave(
+                        initial.copy(
+                            title = title,
+                            content = content,
+                            priority = if (priority == "Important") 1 else 0,
+                            status = when (status) {
+                                "Published" -> AnnouncementStatus.ACTIVE
+                                "Draft" -> AnnouncementStatus.ARCHIVED
+                                else -> AnnouncementStatus.ACTIVE
+                            },
+                            updatedAt = System.currentTimeMillis()
+                        )
+                    )
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0B2A6B))
+            ) { Text("Update") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )

@@ -72,7 +72,8 @@ fun UserEntity.toModel(): User =
         email = email,
         role = UserRole.valueOf(role),
         active = active,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
+        passwordHash = null
     )
 
 fun User.toEntity(): UserEntity =
@@ -82,5 +83,6 @@ fun User.toEntity(): UserEntity =
         email = email,
         role = role.name,
         active = active,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
+        passwordHash = passwordHash
     )

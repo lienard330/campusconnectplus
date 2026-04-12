@@ -1,5 +1,6 @@
 package com.campusconnectplus.core.di
 
+import android.content.Context
 import androidx.compose.runtime.compositionLocalOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -53,8 +54,8 @@ object ViewModelFactories {
         AdminEventsViewModel(container.eventRepository)
     }
 
-    fun adminMediaFactory(container: AppContainer): ViewModelProvider.Factory = factory {
-        AdminMediaViewModel(container.mediaRepository)
+    fun adminMediaFactory(container: AppContainer, appContext: Context): ViewModelProvider.Factory = factory {
+        AdminMediaViewModel(appContext.applicationContext, container.mediaRepository)
     }
 
     fun adminAnnouncementsFactory(container: AppContainer): ViewModelProvider.Factory = factory {

@@ -17,6 +17,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import coil.compose.AsyncImage
+import com.campusconnectplus.core.ui.components.VideoPlayer
+import com.campusconnectplus.data.repository.MediaType
 import com.campusconnectplus.feature_student.media.StudentMediaViewModel
 
 @Composable
@@ -25,6 +29,7 @@ fun StudentMediaScreen(vm: StudentMediaViewModel) {
     val favIds by vm.favoriteMediaIds.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf("All") }
+    var selectedMedia by remember { mutableStateOf<com.campusconnectplus.data.repository.Media?>(null) }
     val filters = listOf("All", "Events", "Campus Life", "Sports")
 
     val filteredMedia = remember(media, searchQuery) {
@@ -103,7 +108,10 @@ fun StudentMediaScreen(vm: StudentMediaViewModel) {
             ) {
                 items(filteredMedia, key = { it.id }) { item ->
                     val isSaved = favIds.contains(item.id)
-                    Card(shape = RoundedCornerShape(12.dp)) {
+                    Card(
+                        shape = RoundedCornerShape(12.dp),
+                        onClick = { selectedMedia = item }
+                    ) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(14.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -125,5 +133,51 @@ fun StudentMediaScreen(vm: StudentMediaViewModel) {
                 }
             }
         }
+    }
+
+    selectedMedia?.let { item ->
+        AlertDialog(
+            onDismissRequest = { selectedMedia = null },
+            title = { Text(item.title.ifEmpty { item.fileName }, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) },
+            text = {
+                Column {
+                    Text("Type: ${item.type.name}", style = MaterialTheme.typography.bodyMedium)
+                    if (item.date.isNotBlank()) {
+                        Text("Date: ${item.date}", style = MaterialTheme.typography.bodyMedium)
+                    }
+                    if (item.duration.isNotBlank()) {
+                        Text("Duration: ${item.duration}", style = MaterialTheme.typography.bodyMedium)
+                    }
+                    if (item.sizeMb > 0) {
+                        Text("Size: ${item.sizeMb} MB", style = MaterialTheme.typography.bodyMedium)
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    
+                    if (item.url.isNotBlank()) {
+                        if (item.type == MediaType.VIDEO) {
+                            VideoPlayer(url = item.url)
+                        } else {
+                            AsyncImage(
+                                model = item.url,
+                                contentDescription = item.title,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp)
+                                    .background(Color.LightGray, RoundedCornerShape(8.dp)),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                            )
+                        }
+                        Spacer(Modifier.height(8.dp))
+                    }
+                    
+                    Text("Media URL: ${item.url}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { selectedMedia = null }) {
+                    Text("Close")
+                }
+            }
+        )
     }
 }

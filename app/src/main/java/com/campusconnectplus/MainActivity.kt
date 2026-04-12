@@ -1,6 +1,10 @@
 package com.campusconnectplus
 
 import android.os.Bundle
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.activity.ComponentActivity
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -40,11 +44,34 @@ import com.campusconnectplus.ui.admin.*
 import com.campusconnectplus.ui.student.*
 
 class MainActivity : ComponentActivity() {
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        // Use string literals to check results to avoid lint issues with SDK-specific constants
+        val imagesGranted = permissions["android.permission.READ_MEDIA_IMAGES"] ?: false
+        val videoGranted = permissions["android.permission.READ_MEDIA_VIDEO"] ?: false
+        val visualUserSelected = permissions["android.permission.READ_MEDIA_VISUAL_USER_SELECTED"] ?: false
+        val storageGranted = permissions["android.permission.READ_EXTERNAL_STORAGE"] ?: false
+
+        if (imagesGranted && videoGranted) {
+            DebugLog.log("MainActivity", "Full media access granted", emptyMap(), "H1")
+        } else if (visualUserSelected) {
+            DebugLog.log("MainActivity", "Partial media access granted (User Selected)", emptyMap(), "H1")
+        } else if (storageGranted) {
+            DebugLog.log("MainActivity", "Legacy storage access granted", emptyMap(), "H1")
+        } else {
+            DebugLog.log("MainActivity", "Some permissions denied", emptyMap(), "H1")
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         DebugLog.init(this)
         val container = ServiceLocator.provideContainer(this)
+
+        checkAndRequestPermissions()
 
         setContent {
             MaterialTheme {
@@ -257,7 +284,12 @@ class MainActivity : ComponentActivity() {
                             }
                             if (currentUser != null && AdminTab.Media.route in allowedTabs.map { it.route }) {
                                 val adminMediaVm: com.campusconnectplus.feature_admin.media.AdminMediaViewModel =
-                                    viewModel(factory = ViewModelFactories.adminMediaFactory(LocalAppContainer.current))
+                                    viewModel(
+                                        factory = ViewModelFactories.adminMediaFactory(
+                                            LocalAppContainer.current,
+                                            LocalContext.current
+                                        )
+                                    )
                                 Box(Modifier.fillMaxSize()) {
                                     AdminScaffold(
                                         currentRoute = AdminTab.Media.route,
@@ -377,5 +409,27 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        }
     }
-}}
+
+    private fun checkAndRequestPermissions() {
+        val permissions = mutableListOf<String>()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add("android.permission.READ_MEDIA_IMAGES")
+            permissions.add("android.permission.READ_MEDIA_VIDEO")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                permissions.add("android.permission.READ_MEDIA_VISUAL_USER_SELECTED")
+            }
+        } else {
+            permissions.add("android.permission.READ_EXTERNAL_STORAGE")
+        }
+
+        val toRequest = permissions.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        if (toRequest.isNotEmpty()) {
+            requestPermissionLauncher.launch(toRequest.toTypedArray())
+        }
+    }
+}

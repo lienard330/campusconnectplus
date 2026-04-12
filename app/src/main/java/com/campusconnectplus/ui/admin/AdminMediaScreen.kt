@@ -1,7 +1,9 @@
 package com.campusconnectplus.ui.admin
 
 import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.LocalOverscrollConfiguration
@@ -105,8 +107,23 @@ private fun UploadMediaDialog(
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
     val context = LocalContext.current
 
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
-        selectedUri = it
+    val pickVisualLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        selectedUri = uri
+    }
+
+    val selectedLabel = remember(selectedUri, context) {
+        val u = selectedUri ?: return@remember "No file selected"
+        context.contentResolver.query(u, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+            ?.use { c ->
+                if (c.moveToFirst()) {
+                    val idx = c.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (idx >= 0) c.getString(idx)?.takeIf { it.isNotBlank() } else null
+                } else null
+            }
+            ?: u.lastPathSegment
+            ?: "Selected"
     }
 
     AlertDialog(
@@ -131,7 +148,7 @@ private fun UploadMediaDialog(
                         Icon(Icons.Outlined.FileCopy, null, tint = AdminColors.Secondary)
                         Spacer(Modifier.width(12.dp))
                         Text(
-                            text = selectedUri?.path?.substringAfterLast('/') ?: "No file selected",
+                            text = selectedLabel,
                             style = MaterialTheme.typography.bodyMedium,
                             color = if (selectedUri == null) AdminColors.Secondary else AdminColors.Dark
                         )
@@ -139,11 +156,17 @@ private fun UploadMediaDialog(
                 }
 
                 Button(
-                    onClick = { launcher.launch("image/*,video/*") },
+                    onClick = {
+                        pickVisualLauncher.launch(
+                            PickVisualMediaRequest(
+                                ActivityResultContracts.PickVisualMedia.ImageAndVideo
+                            )
+                        )
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Select File from Device...")
+                    Text("Photos & videos…")
                 }
             }
         },

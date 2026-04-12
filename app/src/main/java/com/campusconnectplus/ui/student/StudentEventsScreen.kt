@@ -34,6 +34,7 @@ fun StudentEventsScreen(vm: StudentEventsViewModel) {
 
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<EventCategory?>(null) }
+    var selectedEvent by remember { mutableStateOf<com.campusconnectplus.data.repository.Event?>(null) }
 
     val events = when (val s = eventsState) {
         is UiState.Success -> s.data
@@ -189,7 +190,10 @@ fun StudentEventsScreen(vm: StudentEventsViewModel) {
                             ) {
                                 items(filteredEvents, key = { it.id }) { event ->
                                     val isSaved = favIds.contains(event.id)
-                                    Card(shape = RoundedCornerShape(12.dp)) {
+                                    Card(
+                                        shape = RoundedCornerShape(12.dp),
+                                        onClick = { selectedEvent = event }
+                                    ) {
                                         Row(
                                             modifier = Modifier.fillMaxWidth().padding(14.dp),
                                             horizontalArrangement = Arrangement.SpaceBetween
@@ -215,5 +219,25 @@ fun StudentEventsScreen(vm: StudentEventsViewModel) {
                 }
             }
         }
+    }
+
+    selectedEvent?.let { event ->
+        AlertDialog(
+            onDismissRequest = { selectedEvent = null },
+            title = { Text(event.title, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) },
+            text = {
+                Column {
+                    Text("Date: ${event.date}", style = MaterialTheme.typography.bodyMedium)
+                    Text("Venue: ${event.venue}", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(Modifier.height(12.dp))
+                    Text(event.description, style = MaterialTheme.typography.bodyLarge)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { selectedEvent = null }) {
+                    Text("Close")
+                }
+            }
+        )
     }
 }

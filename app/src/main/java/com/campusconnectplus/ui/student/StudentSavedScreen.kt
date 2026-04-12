@@ -15,6 +15,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import com.campusconnectplus.core.ui.components.VideoPlayer
+import com.campusconnectplus.data.repository.MediaType
 import com.campusconnectplus.feature_student.saved.StudentSavedViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -24,6 +27,9 @@ fun StudentSavedScreen(vm: StudentSavedViewModel) {
     val savedMedia by vm.savedMedia.collectAsState()
 
     var tabIndex by remember { mutableStateOf(0) }
+    var selectedEvent by remember { mutableStateOf<com.campusconnectplus.data.repository.Event?>(null) }
+    var selectedMedia by remember { mutableStateOf<com.campusconnectplus.data.repository.Media?>(null) }
+
     val tabs = listOf("Events", "Media")
     val totalItems = savedEvents.size + savedMedia.size
 
@@ -148,6 +154,7 @@ fun StudentSavedScreen(vm: StudentSavedViewModel) {
                                     SavedCard(
                                         title = event.title,
                                         subtitle = event.date,
+                                        onClick = { selectedEvent = event },
                                         onRemove = { vm.removeEvent(event.id) }
                                     )
                                 }
@@ -165,8 +172,9 @@ fun StudentSavedScreen(vm: StudentSavedViewModel) {
                             ) {
                                 items(savedMedia, key = { it.id }) { media ->
                                     SavedCard(
-                                        title = media.title,
+                                        title = media.title.ifEmpty { media.fileName },
                                         subtitle = media.type.name,
+                                        onClick = { selectedMedia = media },
                                         onRemove = { vm.removeMedia(media.id) }
                                     )
                                 }
@@ -177,15 +185,75 @@ fun StudentSavedScreen(vm: StudentSavedViewModel) {
             }
         }
     }
+
+    selectedEvent?.let { event ->
+        AlertDialog(
+            onDismissRequest = { selectedEvent = null },
+            title = { Text(event.title, fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text("Date: ${event.date}", style = MaterialTheme.typography.bodyMedium)
+                    Text("Venue: ${event.venue}", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(Modifier.height(12.dp))
+                    Text(event.description, style = MaterialTheme.typography.bodyLarge)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { selectedEvent = null }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
+
+    selectedMedia?.let { item ->
+        AlertDialog(
+            onDismissRequest = { selectedMedia = null },
+            title = { Text(item.title.ifEmpty { item.fileName }, fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text("Type: ${item.type.name}", style = MaterialTheme.typography.bodyMedium)
+                    if (item.date.isNotBlank()) Text("Date: ${item.date}", style = MaterialTheme.typography.bodyMedium)
+                    if (item.sizeMb > 0) Text("Size: ${item.sizeMb} MB", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(Modifier.height(12.dp))
+
+                    if (item.url.isNotBlank()) {
+                        if (item.type == MediaType.VIDEO) {
+                            VideoPlayer(url = item.url)
+                        } else {
+                            AsyncImage(
+                                model = item.url,
+                                contentDescription = item.title,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp)
+                                    .background(Color.LightGray, RoundedCornerShape(8.dp)),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                            )
+                        }
+                        Spacer(Modifier.height(8.dp))
+                    }
+
+                    Text("Media URL: ${item.url}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { selectedMedia = null }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
 }
 
 @Composable
 private fun SavedCard(
     title: String,
     subtitle: String,
+    onClick: () -> Unit,
     onRemove: () -> Unit
 ) {
-    Card {
+    Card(onClick = onClick) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()

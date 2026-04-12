@@ -30,6 +30,7 @@ private fun timeAgo(updatedAt: Long): String {
 @Composable
 fun StudentAnnouncementsScreen(vm: StudentAnnouncementsViewModel) {
     val announcements by vm.announcements.collectAsState()
+    var selectedAnnouncement by remember { mutableStateOf<Announcement?>(null) }
 
     Column(Modifier.fillMaxSize()) {
         Column(
@@ -71,16 +72,42 @@ fun StudentAnnouncementsScreen(vm: StudentAnnouncementsViewModel) {
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(announcements, key = { it.id }) { a ->
-                    AnnouncementCard(a)
+                    AnnouncementCard(a, onClick = { selectedAnnouncement = a })
                 }
             }
         }
     }
+
+    selectedAnnouncement?.let { a ->
+        AlertDialog(
+            onDismissRequest = { selectedAnnouncement = null },
+            title = { Text(a.title, fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text(
+                        "Posted ${timeAgo(a.updatedAt)}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color(0xFF64748B)
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text(a.content, style = MaterialTheme.typography.bodyLarge)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { selectedAnnouncement = null }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
 }
 
 @Composable
-private fun AnnouncementCard(a: Announcement) {
-    Card(shape = RoundedCornerShape(16.dp)) {
+private fun AnnouncementCard(a: Announcement, onClick: () -> Unit) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        onClick = onClick
+    ) {
         Column(Modifier.padding(14.dp)) {
             Text(a.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(6.dp))

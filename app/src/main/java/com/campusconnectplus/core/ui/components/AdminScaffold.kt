@@ -6,6 +6,11 @@ import com.campusconnectplus.ui.admin.AdminBottomBar
 import com.campusconnectplus.ui.admin.AdminTab
 import com.campusconnectplus.ui.admin.tabsForRole
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
+
 @Composable
 fun AdminScaffold(
     currentRoute: String,
@@ -15,7 +20,13 @@ fun AdminScaffold(
 ) {
     Scaffold(
         bottomBar = { AdminBottomBar(currentRoute = currentRoute, onNavigate = onNavigate, tabs = allowedTabs) }
-    ) { _ ->
-        content()
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+        ) {
+            content()
+        }
     }
 }
